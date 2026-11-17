@@ -1,2 +1,7 @@
-streamlit
+fastapi
+uvicorn
 requests
+psycopg2-binary
+sqlalchemy
+pydantic
+streamlit
