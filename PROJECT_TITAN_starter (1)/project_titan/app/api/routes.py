@@ -1,18 +1,16 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 from typing import Optional, List
 from pydantic import BaseModel
 from app.domain.schemas import SystemStatus, SportCode
 
 router = APIRouter()
 
-# Modelo de ejemplo para los equipos
 class Team(BaseModel):
     id: int
     name: str
     sport: str
     country: Optional[str] = None
 
-# Base de datos simulada de equipos para tu análisis de apuestas
 TEAMS_DB = [
     {"id": 1, "name": "FC Barcelona", "sport": "football", "country": "Spain"},
     {"id": 2, "name": "Real Madrid", "sport": "football", "country": "Spain"},
@@ -40,15 +38,9 @@ def get_teams(
     sport: Optional[str] = Query(None, description="Filtrar por deporte (ej. football, nba)"),
     search: Optional[str] = Query(None, description="Buscar por nombre de equipo")
 ):
-    """
-    Permite consultar equipos específicos con filtros opcionales por deporte o nombre.
-    """
     results = TEAMS_DB
-    
     if sport:
         results = [t for t in results if t["sport"].lower() == sport.lower()]
-        
     if search:
         results = [t for t in results if search.lower() in t["name"].lower()]
-        
     return results
