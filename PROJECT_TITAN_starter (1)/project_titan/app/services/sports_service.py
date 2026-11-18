@@ -9,48 +9,45 @@ SPORTS_CATALOG = [
     {"id": 5, "name": "Ice Hockey (NHL)", "code": "nhl", "country": "USA/Canada"}
 ]
 
-TEAMS_CATALOG = [
-    # --- Football (Fútbol / Soccer) ---
-    {"id": 101, "name": "Real Madrid", "sport": "football", "league": "La Liga", "country": "Spain"},
-    {"id": 102, "name": "Celta de Vigo", "sport": "football", "league": "La Liga", "country": "Spain"},
-    {"id": 103, "name": "FC Barcelona", "sport": "football", "league": "La Liga", "country": "Spain"},
-    {"id": 104, "name": "PSV Eindhoven", "sport": "football", "league": "Eredivisie", "country": "Netherlands"},
-    {"id": 105, "name": "FC Motagua", "sport": "football", "league": "Liga Nacional", "country": "Honduras"},
-
-    # --- NBA ---
-    {"id": 201, "name": "Los Angeles Lakers", "sport": "nba", "league": "NBA", "country": "USA"},
-    {"id": 202, "name": "Golden State Warriors", "sport": "nba", "league": "NBA", "country": "USA"},
-    {"id": 203, "name": "Boston Celtics", "sport": "nba", "league": "NBA", "country": "USA"},
-
-    # --- MLB ---
-    {"id": 301, "name": "New York Yankees", "sport": "mlb", "league": "MLB", "country": "USA"},
-    {"id": 302, "name": "Los Angeles Dodgers", "sport": "mlb", "league": "MLB", "country": "USA"},
-
-    # --- NFL ---
-    {"id": 401, "name": "Kansas City Chiefs", "sport": "nfl", "league": "NFL", "country": "USA"},
-    {"id": 402, "name": "Dallas Cowboys", "sport": "nfl", "league": "NFL", "country": "USA"},
-
-    # --- NHL ---
-    {"id": 501, "name": "Edmonton Oilers", "sport": "nhl", "league": "NHL", "country": "Canada"},
-    {"id": 502, "name": "Boston Bruins", "sport": "nhl", "league": "NHL", "country": "USA"}
+# Base de datos simulada de partidos con estadísticas avanzadas para apuestas
+MATCHES_STATS_DB = [
+    {
+        "match_id": 1001,
+        "league": "La Liga",
+        "home_team": "Real Madrid",
+        "away_team": "Celta de Vigo",
+        "odds_1x2": {"home": 1.35, "draw": 5.20, "away": 8.50},
+        "expected_goals": {"home_xg": 2.45, "away_xg": 0.92},
+        "btts": {"yes_prob": 0.58, "no_prob": 0.42},
+        "corners_avg": {"home": 6.8, "away": 3.5},
+        "recent_form_last_15": {
+            "home": "WWWDWWWDWWLLWWW", # Últimos 15 partidos (W=Win, D=Draw, L=Loss)
+            "away": "WLDWDLLWWWDLLWD"
+        }
+    },
+    {
+        "match_id": 1002,
+        "league": "Eredivisie",
+        "home_team": "PSV Eindhoven",
+        "away_team": "FC Motagua", # Ejemplo internacional simulado
+        "odds_1x2": {"home": 1.45, "draw": 4.50, "away": 6.00},
+        "expected_goals": {"home_xg": 2.10, "away_xg": 1.15},
+        "btts": {"yes_prob": 0.65, "no_prob": 0.35},
+        "corners_avg": {"home": 7.2, "away": 4.1},
+        "recent_form_last_15": {
+            "home": "WWWWLDWWWWWDWWL",
+            "away": "WDWWLWDWWWDWLLW"
+        }
+    }
 ]
 
 def get_all_sports() -> List[Dict[str, Any]]:
-    """Devuelve la lista completa de deportes soportados."""
     return SPORTS_CATALOG
 
-def get_all_teams(sport_query: Optional[str] = None, league_query: Optional[str] = None) -> List[Dict[str, Any]]:
-    """Devuelve el catálogo de equipos filtrado opcionalmente por deporte o liga."""
-    teams = TEAMS_CATALOG
-    
-    if sport_query:
-        s_query = sport_query.lower()
-        if s_query in ["futbol", "fútbol"]:
-            s_query = "football"
-        teams = [t for t in teams if t["sport"].lower() == s_query]
-        
-    if league_query:
-        l_query = league_query.lower()
-        teams = [t for t in teams if l_query in t["league"].lower()]
-        
-    return teams
+def get_match_analysis(league: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Devuelve las estadísticas detalladas y cuotas de partidos para análisis de apuestas."""
+    matches = MATCHES_STATS_DB
+    if league:
+        l_query = league.lower()
+        matches = [m for m in matches if l_query in m["league"].lower()]
+    return matches
