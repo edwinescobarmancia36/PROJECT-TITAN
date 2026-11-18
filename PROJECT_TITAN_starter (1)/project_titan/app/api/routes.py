@@ -1,102 +1,63 @@
-from fastapi import APIRouter, Query
-from typing import Optional, List
-from pydantic import BaseModel
-from app.domain.schemas import SystemStatus, SportCode
+import streamlit as st
+import requests
 
-router = APIRouter()
+# Configuración de la página
+st.set_page_config(page_title="Project Titan - Dashboard", page_icon="⚡", layout="wide")
 
-class Team(BaseModel):
-    id: int
-    name: str
-    sport: str
-    country: Optional[str] = None
+# URL oficial de tu backend desplegado en Railway
+API_URL = "https://project-titan-production-5d461bd9.up.railway.app/api/v1"
 
-# Nuevo modelo para los partidos / cuotas del Proyecto Titán
-class Match(BaseModel):
-    id: int
-    sport: str
-    league: str
-    home_team: str
-    away_team: str
-    odds_1: float
-    odds_x: Optional[float] = None
-    odds_2: float
-    status: str = "upcoming"
+st.title("⚡ Project Titan - Sports Analytics Dashboard")
+st.markdown("Plataforma modular de inteligencia deportiva conectada a Railway.")
 
-TEAMS_DB = [
-    {"id": 1, "name": "FC Barcelona", "sport": "football", "country": "Spain"},
-    {"id": 2, "name": "Real Madrid", "sport": "football", "country": "Spain"},
-    {"id": 3, "name": "FC Motagua", "sport": "football", "country": "Honduras"},
-    {"id": 4, "name": "Olimpia", "sport": "football", "country": "Honduras"},
-    {"id": 5, "name": "Los Angeles Lakers", "sport": "nba", "country": "USA"},
-    {"id": 6, "name": "Chicago Bulls", "sport": "nba", "country": "USA"},
-]
+# Sidebar para navegación
+st.sidebar.header("Panel de Control")
+opcion = st.sidebar.radio("Selecciona una vista:", ["📊 Explorador de Equipos", "⚙️ Estado del Sistema"])
 
-# Base de datos simulada de partidos conectada a los deportes
-MATCHES_DB = [
-    {
-        "id": 1,
-        "sport": "football",
-        "league": "Copa del Rey",
-        "home_team": "CD Alcoyano",
-        "away_team": "RCD Mallorca",
-        "odds_1": 6.50,
-        "odds_x": 4.10,
-        "odds_2": 1.46
-    },
-    {
-        "id": 2,
-        "sport": "football",
-        "league": "Segunda División Egipto",
-        "home_team": "Pharco FC",
-        "away_team": "El Entag El Harby",
-        "odds_1": 1.85,
-        "odds_x": 3.20,
-        "odds_2": 4.30
-    },
-    {
-        "id": 3,
-        "sport": "nba",
-        "league": "NBA Regular Season",
-        "home_team": "Los Angeles Lakers",
-        "away_team": "Chicago Bulls",
-        "odds_1": 1.72,
-        "odds_x": None,
-        "odds_2": 2.15
-    }
-]
+if opcion == "⚙️ Estado del Sistema":
+    st.subheader("Estado de la API en la Nube")
+    try:
+        response = requests.get(f"{API_URL}/status")
+        if response.status_code == 200:
+            data = response.json()
+            st.success("🟢 Conexión exitosa con el servidor en Railway.")
+            st.json(data)
+        else:
+            st.error("⚠️ El servidor respondió con un error.")
+    except Exception as e:
+        st.error(f"❌ No se pudo conectar al servidor: {e}")
 
-@router.get("/status", response_model=SystemStatus, tags=["system"])
-def status():
-    return SystemStatus(
-        project="PROJECT TITAN",
-        status="active",
-        supported_sports=list(SportCode),
-        betting_execution_enabled=False,
-    )
+elif opcion == "📊 Explorador de Equipos":
+    st.subheader("Catálogo de Equipos por Deporte")
+    
+    # Obtener la lista de deportes disponibles desde el backend
+    try:
+        res_sports = requests.get(f"{API_URL}/sports")
+        sports_list = [s["code"] for s in res_sports.json()] if res_sports.status_code == 200 else ["football", "nba"]
+    except:
+        sports_list = ["football", "nba"]
 
-@router.get("/sports", tags=["catalog"])
-def sports():
-    return [{"code": s.value, "name": s.name} for s in SportCode]
-
-@router.get("/teams", response_model=List[Team], tags=["catalog"])
-def get_teams(
-    sport: Optional[str] = Query(None, description="Filtrar por deporte (ej. football, nba)"),
-    search: Optional[str] = Query(None, description="Buscar por nombre de equipo")
-):
-    results = TEAMS_DB
-    if sport:
-        results = [t for t in results if t["sport"].lower() == sport.lower()]
-    if search:
-        results = [t for t in results if search.lower() in t["name"].lower()]
-    return results
-
-# NUEVO ENDPOINT: Para que Streamlit reciba los partidos al filtrar por deporte
-@router.get("/matches", response_model=List[Match], tags=["analytics"])
-def get_matches(
-    sport: Optional[str] = Query(None, description="Filtrar partidos por deporte (ej. football, nba)")
-):
-    results = MATCHES_DB
-    if sport:
-        results = [m for m in results if m["sport"].lower() == sport.lower()]
-    return results
+    # Filtro por deporte
+    deporte_seleccionado = st.selectbox("Selecciona un deporte:", sports_list)
+    
+    # Petición de equipos filtrados
+    try:
+        res_teams = requests.get(f"{API_URL}/teams", params={"sport": deporte_seleccionado})
+        if res_teams.status_code == 200:
+            teams = res_teams.json()
+            
+            if not teams:
+                st.warning(f"No hay equipos registrados para el deporte: {deporte_seleccionado}")
+            else:
+                st.info(f"Se encontraron {len(teams)} equipos en la base de datos.")
+                for team in teams:
+                    with st.container():
+                        col1, col2, col3 = st.columns([3, 2, 2])
+                        col1.markdown(f"**⚽ Equipo:** {team.get('name')}")
+                        col2.markdown(f"**🌍 País:** {team.get('country', 'N/A')}")
+                        col3.markdown(f"**🆔 ID:** {team.get('id')}")
+                        st.divider()
+        else:
+            st.error("Error al obtener los equipos de la API.")
+    except Exception as e:
+        st.error(f"Error de conexión: {e}")
