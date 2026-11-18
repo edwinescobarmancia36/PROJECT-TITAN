@@ -1,63 +1,40 @@
-import streamlit as st
-import requests
+from fastapi import APIRouter, Query
+from typing import Optional, List
+from pydantic import BaseModel
 
-# Configuración de la página
-st.set_page_config(page_title="Project Titan - Dashboard", page_icon="⚡", layout="wide")
+router = APIRouter()
 
-# URL oficial de tu backend desplegado en Railway
-API_URL = "https://project-titan-production-5d461bd9.up.railway.app/api/v1"
+# Modelos de ejemplo para los catálogos
+class Sport(BaseModel):
+    id: int
+    name: string_type = "string" # o string normal
+    code: str
+    country: str = "Global"
 
-st.title("⚡ Project Titan - Sports Analytics Dashboard")
-st.markdown("Plataforma modular de inteligencia deportiva conectada a Railway.")
+class Team(BaseModel):
+    id: int
+    name: str
+    sport: str
+    country: str
 
-# Sidebar para navegación
-st.sidebar.header("Panel de Control")
-opcion = st.sidebar.radio("Selecciona una vista:", ["📊 Explorador de Equipos", "⚙️ Estado del Sistema"])
+@router.get("/sports", tags=["catalog"])
+def get_sports():
+    """Obtener la lista de deportes disponibles"""
+    return [
+        {"id": 1, "name": "Football", "code": "football", "country": "Global"},
+        {"id": 2, "name": "Basketball", "code": "nba", "country": "USA"}
+    ]
 
-if opcion == "⚙️ Estado del Sistema":
-    st.subheader("Estado de la API en la Nube")
-    try:
-        response = requests.get(f"{API_URL}/status")
-        if response.status_code == 200:
-            data = response.json()
-            st.success("🟢 Conexión exitosa con el servidor en Railway.")
-            st.json(data)
-        else:
-            st.error("⚠️ El servidor respondió con un error.")
-    except Exception as e:
-        st.error(f"❌ No se pudo conectar al servidor: {e}")
-
-elif opcion == "📊 Explorador de Equipos":
-    st.subheader("Catálogo de Equipos por Deporte")
+@router.get("/teams", tags=["catalog"])
+def get_teams(sport: Optional[str] = Query(None, description="Filtrar por deporte (ej. football, nba)")):
+    """Obtener el catálogo de equipos filtrado por deporte"""
+    teams_db = [
+        {"id": 101, "name": "Real Madrid", "sport": "football", "country": "Spain"},
+        {"id": 102, "name": "Celta de Vigo", "sport": "football", "country": "Spain"},
+        {"id": 103, "name": "PSV Eindhoven", "sport": "football", "country": "Netherlands"},
+        {"id": 201, "name": "Los Angeles Lakers", "sport": "nba", "country": "USA"}
+    ]
     
-    # Obtener la lista de deportes disponibles desde el backend
-    try:
-        res_sports = requests.get(f"{API_URL}/sports")
-        sports_list = [s["code"] for s in res_sports.json()] if res_sports.status_code == 200 else ["football", "nba"]
-    except:
-        sports_list = ["football", "nba"]
-
-    # Filtro por deporte
-    deporte_seleccionado = st.selectbox("Selecciona un deporte:", sports_list)
-    
-    # Petición de equipos filtrados
-    try:
-        res_teams = requests.get(f"{API_URL}/teams", params={"sport": deporte_seleccionado})
-        if res_teams.status_code == 200:
-            teams = res_teams.json()
-            
-            if not teams:
-                st.warning(f"No hay equipos registrados para el deporte: {deporte_seleccionado}")
-            else:
-                st.info(f"Se encontraron {len(teams)} equipos en la base de datos.")
-                for team in teams:
-                    with st.container():
-                        col1, col2, col3 = st.columns([3, 2, 2])
-                        col1.markdown(f"**⚽ Equipo:** {team.get('name')}")
-                        col2.markdown(f"**🌍 País:** {team.get('country', 'N/A')}")
-                        col3.markdown(f"**🆔 ID:** {team.get('id')}")
-                        st.divider()
-        else:
-            st.error("Error al obtener los equipos de la API.")
-    except Exception as e:
-        st.error(f"Error de conexión: {e}")
+    if sport:
+        return [t for t in teams_db if t["sport"].lower() == sport.lower()]
+    return teams_db
