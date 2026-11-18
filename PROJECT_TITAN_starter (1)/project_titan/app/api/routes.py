@@ -1,7 +1,7 @@
 # app/api/routes.py
 from fastapi import APIRouter, Query
 from typing import Optional, List, Dict, Any
-from app.services.sports_service import get_all_sports, get_all_teams
+from app.services.sports_service import get_all_sports, get_match_analysis
 
 router = APIRouter()
 
@@ -10,10 +10,9 @@ def get_sports() -> List[Dict[str, Any]]:
     """Obtener la lista completa de deportes disponibles"""
     return get_all_sports()
 
-@router.get("/teams", tags=["catalog"])
-def get_teams(
-    sport: Optional[str] = Query(None, description="Filtrar por deporte (ej. football, nba, mlb, nfl, nhl)"),
-    league: Optional[str] = Query(None, description="Filtrar por liga (ej. La Liga, NBA, MLB, NFL, NHL)")
+@router.get("/matches/analysis", tags=["betting-analytics"])
+def get_matches_analysis(
+    league: Optional[str] = Query(None, description="Filtrar por liga (ej. La Liga, Eredivisie)")
 ) -> List[Dict[str, Any]]:
-    """Obtener el catálogo completo de equipos filtrado por deporte o liga"""
-    return get_all_teams(sport_query=sport, league_query=league)
+    """Obtener estadísticas avanzadas de partidos (Cuotas 1x2, xG, BTTS, Córners y Forma de últimos 15 partidos)"""
+    return get_match_analysis(league=league)
