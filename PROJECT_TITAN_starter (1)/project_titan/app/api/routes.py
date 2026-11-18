@@ -4,19 +4,6 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
-# Modelos de ejemplo para los catálogos
-class Sport(BaseModel):
-    id: int
-    name: string_type = "string" # o string normal
-    code: str
-    country: str = "Global"
-
-class Team(BaseModel):
-    id: int
-    name: str
-    sport: str
-    country: str
-
 @router.get("/sports", tags=["catalog"])
 def get_sports():
     """Obtener la lista de deportes disponibles"""
