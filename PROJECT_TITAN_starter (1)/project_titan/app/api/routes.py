@@ -22,5 +22,9 @@ def get_teams(sport: Optional[str] = Query(None, description="Filtrar por deport
     ]
     
     if sport:
-        return [t for t in teams_db if t["sport"].lower() == sport.lower()]
+        sport_query = sport.lower()
+        if sport_query in ["futbol", "fútbol"]:
+            sport_query = "football"
+        return [t for t in teams_db if t["sport"].lower() == sport_query]
+    
     return teams_db
