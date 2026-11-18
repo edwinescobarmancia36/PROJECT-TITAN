@@ -1,30 +1,19 @@
+# app/api/routes.py
 from fastapi import APIRouter, Query
-from typing import Optional
+from typing import Optional, List, Dict, Any
+from app.services.sports_service import get_all_sports, get_all_teams
 
 router = APIRouter()
 
 @router.get("/sports", tags=["catalog"])
-def get_sports():
-    """Obtener la lista de deportes disponibles"""
-    return [
-        {"id": 1, "name": "Football", "code": "football", "country": "Global"},
-        {"id": 2, "name": "Basketball", "code": "nba", "country": "USA"}
-    ]
+def get_sports() -> List[Dict[str, Any]]:
+    """Obtener la lista completa de deportes disponibles"""
+    return get_all_sports()
 
 @router.get("/teams", tags=["catalog"])
-def get_teams(sport: Optional[str] = Query(None, description="Filtrar por deporte (ej. football, nba)")):
-    """Obtener el catálogo de equipos filtrado por deporte"""
-    teams_db = [
-        {"id": 101, "name": "Real Madrid", "sport": "football", "country": "Spain"},
-        {"id": 102, "name": "Celta de Vigo", "sport": "football", "country": "Spain"},
-        {"id": 103, "name": "PSV Eindhoven", "sport": "football", "country": "Netherlands"},
-        {"id": 201, "name": "Los Angeles Lakers", "sport": "nba", "country": "USA"}
-    ]
-    
-    if sport:
-        sport_query = sport.lower()
-        if sport_query in ["futbol", "fútbol"]:
-            sport_query = "football"
-        return [t for t in teams_db if t["sport"].lower() == sport_query]
-    
-    return teams_db
+def get_teams(
+    sport: Optional[str] = Query(None, description="Filtrar por deporte (ej. football, nba, mlb, nfl, nhl)"),
+    league: Optional[str] = Query(None, description="Filtrar por liga (ej. La Liga, NBA, MLB, NFL, NHL)")
+) -> List[Dict[str, Any]]:
+    """Obtener el catálogo completo de equipos filtrado por deporte o liga"""
+    return get_all_teams(sport_query=sport, league_query=league)
